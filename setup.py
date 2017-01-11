@@ -6,7 +6,7 @@ setup(
     description="Filters a BibTeX bibliography.",
     license='MIT',
     install_requires=['Click','bibtexparser'],
-    packages=['.'],
+    packages=['bib_filter'],
     entry_points="""
         [console_scripts]
         bib-filter=bib_filter:cli
