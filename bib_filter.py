@@ -4,6 +4,7 @@ import click
 import bibtexparser
 from os import path
 from re import compile
+import csv
 
 file_ = click.File('r')
 patterns = {
@@ -25,15 +26,32 @@ def parse_aux(auxfile, backend='natbib'):
         if key is None: continue
         yield key.group(0)
 
+def create_abbreviator(journal_abbreviations):
+    # Read as tsv file
+    r = csv.reader(journal_abbreviations, dialect="excel-tab")
+    _ = (i for i in r if len(i)==2)
+    abbrevs = {k:v for k,v in _}
+    def fn(entry):
+        try:
+            _ = entry['journal']
+            _ = abbrevs[_]
+            entry['journal'] = _
+        except KeyError:
+            pass
+        return entry
+    return fn
+
+
 @click.command()
 @click.argument('library',type=file_)
 @click.argument('outfile',type=click.File('w', encoding='utf-8'))
 @click.option('--keys','-k', type=file_)
 @click.option('--aux','-a', type=file_)
+@click.option('--journal-abbreviations', type=file_)
 @click.option('--clean', is_flag=True, default=False)
 @click.option('--natbib','backend',flag_value='natbib', default=True)
 @click.option('--biblatex', 'backend',flag_value='biblatex')
-def cli(library,outfile,keys=None,aux=None, clean=False, backend='natbib'):
+def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None, clean=False, backend='natbib'):
 
     db = bibtexparser.load(library)
 
@@ -45,8 +63,15 @@ def cli(library,outfile,keys=None,aux=None, clean=False, backend='natbib'):
     _keys = set(_keys)
     click.echo(" ".join(_keys))
 
-    db.entries = [e for e in db.entries
-        if e['ID'] in _keys]
+    # If we don't have any keys, we just keep going with
+    # all keys
+    if len(_keys) > 0:
+        db.entries = [e for e in db.entries
+            if e['ID'] in _keys]
+
+    if journal_abbreviations is not None:
+        abbreviate_matching = create_abbreviator(journal_abbreviations)
+        db.entries = [abbreviate_matching(e) for e in db.entries]
 
     if clean:
         for entry in db.entries:
