@@ -8,8 +8,8 @@ import csv
 
 file_ = click.File('r')
 patterns = {
-    'natbib': r'(?<=^\\citation\{)(.+)(?=\})',
-    'biblatex': r'(?<=\\abx@aux@cite\{)(.+)(?=\})'
+    'natbib': r'\\citation{([\w,]+)}',
+    'biblatex': r'\\abx@aux@cite\{(.+)}'
 }
 
 def parse_list(keyfile):
@@ -22,9 +22,11 @@ def parse_aux(auxfile, backend='natbib'):
     """
     pattern = compile(patterns[backend])
     for l in auxfile.readlines():
-        key = pattern.search(l)
+        key = pattern.match(l)
         if key is None: continue
-        yield key.group(0)
+        st = key.group(1).strip()
+        for s in st.split(','):
+            yield s.strip()
 
 def create_abbreviator(journal_abbreviations):
     # Read as tsv file
@@ -60,7 +62,7 @@ def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None, clean=Fa
         _keys += list(parse_list(keys))
     if aux is not None:
         _keys += list(parse_aux(aux, backend=backend))
-    _keys = set(_keys)
+    _keys = sorted(set(_keys))
     click.echo(" ".join(_keys))
 
     # If we don't have any keys, we just keep going with
