@@ -34,12 +34,13 @@ def create_abbreviator(journal_abbreviations):
     _ = (i for i in r if len(i)==2)
     abbrevs = {k:v for k,v in _}
     def fn(entry):
-        try:
-            _ = entry['journal']
-            _ = abbrevs[_]
-            entry['journal'] = _
-        except KeyError:
-            pass
+        for field in ['journal','booktitle']:
+            try:
+                _ = entry[field]
+                _ = abbrevs[_]
+                entry[field] = _
+            except KeyError:
+                pass
         return entry
     return fn
 
