@@ -45,7 +45,7 @@ def create_abbreviator(journal_abbreviations):
     return fn
 
 
-def protect_titles(entry):
+def __protect_titles(entry):
     try:
         entry['title'] = "{"+entry['title']+"}"
     except KeyError:
@@ -86,7 +86,7 @@ def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None,
         db.entries = [abbreviate_matching(e) for e in db.entries]
 
     if protect_titles:
-        db.entries = [protect_titles(e) for e in db.entries]
+        db.entries = [__protect_titles(e) for e in db.entries]
 
     if clean:
         for entry in db.entries:
