@@ -45,6 +45,13 @@ def create_abbreviator(journal_abbreviations):
     return fn
 
 
+def protect_titles(entry):
+    try:
+        entry['title'] = "{"+entry['title']+"}"
+    except KeyError:
+        pass
+    return entry
+
 @click.command()
 @click.argument('library',type=file_)
 @click.argument('outfile',type=click.File('w', encoding='utf-8'))
@@ -52,9 +59,11 @@ def create_abbreviator(journal_abbreviations):
 @click.option('--aux','-a', type=file_)
 @click.option('--journal-abbreviations', type=file_)
 @click.option('--clean', is_flag=True, default=False)
+@click.option('--protect-titles', is_flag=True, default=False)
 @click.option('--natbib','backend',flag_value='natbib', default=True)
 @click.option('--biblatex', 'backend',flag_value='biblatex')
-def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None, clean=False, backend='natbib'):
+def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None,
+        clean=False, protect_titles=False, backend='natbib'):
 
     db = bibtexparser.load(library)
 
@@ -75,6 +84,9 @@ def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None, clean=Fa
     if journal_abbreviations is not None:
         abbreviate_matching = create_abbreviator(journal_abbreviations)
         db.entries = [abbreviate_matching(e) for e in db.entries]
+
+    if protect_titles:
+        db.entries = [protect_titles(e) for e in db.entries]
 
     if clean:
         for entry in db.entries:
