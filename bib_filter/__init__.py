@@ -8,7 +8,7 @@ import csv
 
 file_ = click.File('r')
 patterns = {
-    'natbib': r'\\citation{([\w,]+)}',
+    'natbib': r'\\citation{([\w,-]+)}',
     'biblatex': r'\\abx@aux@cite\{(.+)}'
 }
 
