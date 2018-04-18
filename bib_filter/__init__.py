@@ -5,6 +5,7 @@ import bibtexparser
 from os import path
 from re import compile
 import csv
+from bibtexparser.bparser import BibTexParser
 
 file_ = click.File('r')
 patterns = {
@@ -65,7 +66,9 @@ def __protect_titles(entry):
 def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None,
         clean=False, protect_titles=False, backend='natbib'):
 
-    db = bibtexparser.load(library)
+    parser = BibTexParser(common_strings=True)
+
+    db = bibtexparser.load(library, parser=parser)
 
     _keys = []
     if keys is not None:
