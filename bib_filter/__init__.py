@@ -5,8 +5,9 @@ import bibtexparser
 from os import path
 from re import compile
 import csv
+from bibtexparser.bparser import BibTexParser
 
-file_ = click.File('r')
+file_ = click.File('r', encoding='utf-8')
 patterns = {
     'natbib': r'\\citation{([\w,]+)}',
     'biblatex': r'\\abx@aux@cite\{(.+)}'
@@ -65,16 +66,17 @@ def __protect_titles(entry):
 def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None,
         clean=False, protect_titles=False, backend='natbib'):
 
-    db = bibtexparser.load(library)
-
     _keys = []
     if keys is not None:
         _keys += list(parse_list(keys))
     if aux is not None:
         _keys += list(parse_aux(aux, backend=backend))
     _keys = sorted(set(_keys))
+
     click.echo(" ".join(_keys))
 
+    parser = BibTexParser(common_strings=True)
+    db = bibtexparser.load(library, parser=parser)
     # If we don't have any keys, we just keep going with
     # all keys
     if len(_keys) > 0:
