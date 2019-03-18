@@ -9,7 +9,7 @@ from bibtexparser.bparser import BibTexParser
 
 file_ = click.File('r', encoding='utf-8')
 patterns = {
-    'natbib': r'\\citation{([\w,]+)}',
+    'natbib': r'\\citation{([\w,-]+)}',
     'biblatex': r'\\abx@aux@cite\{(.+)}'
 }
 
@@ -65,6 +65,10 @@ def __protect_titles(entry):
 @click.option('--biblatex', 'backend',flag_value='biblatex')
 def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None,
         clean=False, protect_titles=False, backend='natbib'):
+
+    parser = BibTexParser(common_strings=True)
+
+    db = bibtexparser.load(library, parser=parser)
 
     _keys = []
     if keys is not None:
