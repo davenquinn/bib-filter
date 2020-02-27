@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-import click
 import bibtexparser
 from os import path
 from re import compile
 import csv
 from bibtexparser.bparser import BibTexParser
+from click import command, option, argument, echo, File
 
-file_ = click.File('r', encoding='utf-8')
 patterns = {
     'natbib': r'\\citation{([\w,-]+)}',
     'biblatex': r'\\abx@aux@cite\{(.+)}'
@@ -53,22 +52,28 @@ def __protect_titles(entry):
         pass
     return entry
 
-@click.command()
-@click.argument('library',type=file_)
-@click.argument('outfile',type=click.File('w', encoding='utf-8'))
-@click.option('--keys','-k', type=file_)
-@click.option('--aux','-a', type=file_)
-@click.option('--journal-abbreviations', type=file_)
-@click.option('--clean', is_flag=True, default=False)
-@click.option('--protect-titles', is_flag=True, default=False)
-@click.option('--natbib','backend',flag_value='natbib', default=True)
-@click.option('--biblatex', 'backend',flag_value='biblatex')
+file_ = File('r', encoding='utf-8')
+
+@command()
+@argument('library',type=file_)
+@argument('outfile',type=File('w', encoding='utf-8'))
+@option('--keys','-k', type=file_)
+@option('--aux','-a', type=file_)
+@option('--journal-abbreviations', type=file_)
+@option('--clean', is_flag=True, default=False)
+@option('--protect-titles', is_flag=True, default=False)
+@option('--natbib','backend',flag_value='natbib', default=True)
+@option('--biblatex', 'backend',flag_value='biblatex')
 def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None,
         clean=False, protect_titles=False, backend='natbib'):
 
     parser = BibTexParser(common_strings=True)
 
-    db = bibtexparser.load(library, parser=parser)
+    try:
+        db = bibtexparser.load(library, parser=parser)
+    except IndexError:
+        # We probably don't have any keys
+        return
 
     _keys = []
     if keys is not None:
@@ -77,10 +82,8 @@ def cli(library,outfile,keys=None,aux=None, journal_abbreviations=None,
         _keys += list(parse_aux(aux, backend=backend))
     _keys = sorted(set(_keys))
 
-    click.echo(" ".join(_keys))
+    echo(" ".join(_keys))
 
-    parser = BibTexParser(common_strings=True)
-    db = bibtexparser.load(library, parser=parser)
     # If we don't have any keys, we just keep going with
     # all keys
     if len(_keys) > 0:
